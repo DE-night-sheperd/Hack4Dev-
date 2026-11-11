@@ -1,67 +1,86 @@
-# Hack4Dev-
+# Hack4Dev: Transferable UnitModel for Building Age Classification
 
-#Project disclaimer
-- This project is solesly for the development of the Hack4Dev project, which is a hackathon project that is being developed by the Hack4Dev team.
-- This project is based on the Hack4Dev platform, which is a hackathon platform that is being developed by the PIxelArch team, which is a team of students from the Sol Plaatje Universtiy, any modification or contribution should be permitted by the team and written approval and akcnowledgement of the primary builders of the platform.
-- The core challenge is classifying building ages (4 classes) using Landsat spectral reflectance values (Blue, Green, Red, NIR, SWIR1, SWIR2).
-- The model is designed to be **transferable**, trained on Madrid data and adapted to Amsterdam using few-shot learning (as few as 5-200 samples per class).
-- Spectral signatures of materials like glass, timber, concrete, and brick are captured through annual time-series observations from Landsat 5, 7, 8, and 9.
+## Project Overview
+The **Transferable UnitModel** is a city-agnostic machine learning architecture engineered for the **Building Age Classification Hackathon**. The objective is to classify 30m × 30m Landsat satellite pixels into **4 historical building age classes** based on four decades of multi-spectral observations (1984–2024).
 
-# Project Roles 
-The project roles are as follows:
-- Project Manager (Exccellent, https://github.com/de_night_shepherd)
-- Researcher (Exccellent, https://github.com/de_night_shepherd)
-- Software Developer (Exccellent, https://github.com/de_night_shepherd , )
-- Data Scientist 
-- UI/UX Designer (Lethabo(https://github.com/lethabo-m954), https://github.com/lethabo-m954)
-- Content Writer (https://github.com/de_night_shepherd, https://github.com/de_night_shepherd)
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
-# Project Overview
-This project is a **Transferable Unit Model** designed for the **Building Age Classification hackathon**. The goal is to classify 30m x 30m pixels into 4 age classes based on their spectral fingerprint. The system is engineered to be city-agnostic, allowing seamless transfer from Mediterranean to Maritime urban environments.
+The core challenge is **cross-city domain shift**: Madrid (Mediterranean; stucco/concrete) and Amsterdam (Maritime; brick/water) have drastically different baseline reflectances. Standard supervised models trained on Madrid fail in zero-shot settings on Amsterdam. 
 
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
-### Key Features
- - **Thermal Intelligence:** Maps heat emission levels and Land Surface Temperature (LST) proxies to determine building insulation efficiency.
-- **Proximity Analytics:** Real-time distance mapping to urban hubs, transit, and green spaces, enriching the spatial context.
-- **Digital Twin Engine:** Acts as a high-fidelity backend that streams real-time building metadata (age, materials, net worth, morphology) to an interactive frontend.
-- **Interactive Urban Intelligence:** Integrated with map-based frontends to provide "X-Ray" building insights upon zooming.
-- **Spatial-Temporal Transformer (STT):** Uses a Multi-head Attention mechanism to scan 40-year spectral trajectories, pinpointing exact construction events.
-- **Graph Neural Morphology:** Learns the "urban fabric" by treating buildings as nodes in a graph, capturing topological growth patterns.
-- **Bayesian Uncertainty (MC-Dropout):** Provides confidence scores for every prediction, enabling intelligent active learning and deployment safety.
-- **Metric Learning Unit:** Uses a Deep Embedding Network trained with **Triplet Loss** to learn city-agnostic age representations.
-- **Metaheuristic Optimization:** Employs **Particle Swarm Optimization (PSO)** and **Memetic Algorithms** to fine-tune the master architecture for the ultimate **Macro F1-Score**.
+Our solution combines **Domain-Adversarial Neural Alignment (DANN)** and **Deep Metric Learning (UnitMetricNet)** to learn city-invariant, era-sensitive representations, followed by **Prototypical Few-Shot Transfer** on Amsterdam.
 
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
-### Project Structure
-The implementation is divided into four main Jupyter Notebooks:
-1.  **[UnitModel_1_Intro.ipynb](file:///home/de_night_shepherd/Hack4Dev/UnitModel_1_Intro.ipynb):** Challenge overview, class definitions (1-4), and transfer strategy.
-2.  **[UnitModel_2_Data.ipynb](file:///home/de_night_shepherd/Hack4Dev/UnitModel_2_Data.ipynb):** Loading Parquet datasets for Madrid and Amsterdam.
-3.  **[UnitModel_3_Preprocessing.ipynb](file:///home/de_night_shepherd/Hack4Dev/UnitModel_3_Preprocessing.ipynb):** Class derivation from `weighted_mean_year` and spectral feature engineering.
-4.  **[UnitModel_4_Implementation.ipynb](file:///home/de_night_shepherd/Hack4Dev/UnitModel_4_Implementation.ipynb):** Transfer procedure and PSO-driven F1 optimization.
+---
 
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
-### Getting Started
-To run the project, ensure you have the following libraries installed:
+## Deliverables & Competition Prize Alignment
+Our model and evaluation protocol directly target the four competition awards:
+1. **Best Low-Data F1 (25 samples/class)** (Primary Focus): Prototypical adaptation in L2-normalized embedding space guarantees high generalisation without catastrophic forgetting.
+2. **Best Average F1**: Consistent, monotonic scaling across all sample volumes ($N \in [5, 25, 50, 100, 200]$).
+3. **Best Peak F1**: Competitive maximum performance when all target data is leveraged.
+4. **Best Originality**: Novel combination of satellite intra-annual variance, KD-Tree urban morphology context, GRL domain alignment, and Bayesian MC-Dropout uncertainty estimation.
+
+---
+
+## Age Classes
+| Class | Madrid Period | Amsterdam Period | Historical & Spectral Signature |
+|:-----:|:-------------:|:----------------:|:--------------------------------|
+| **1** | Pre-1960      | Pre-1945         | Traditional masonry, settled low-variance spectral baseline |
+| **2** | 1960–1984     | 1945–1984        | Pre-satellite record post-war expansion |
+| **3** | 1984–2004     | 1984–2004        | Construction event visible in early Landsat observation record |
+| **4** | 2004–2024     | 2004–2024        | Contemporary construction; elevated multi-spectral variance |
+
+---
+
+## Project Structure
+The project is organized into modular Jupyter Notebooks and an end-to-end reproducible CLI script:
+
+- **[UnitModel_1_Intro.ipynb](UnitModel_1_Intro.ipynb):** Vision, scientific methodology, class definitions, and competition deliverables.
+- **[UnitModel_2_Data.ipynb](UnitModel_2_Data.ipynb):** Multi-city parquet loading, observation structure inspection, and atmospheric anomaly detection (`Blue > 15,000`).
+- **[UnitModel_3_Preprocessing.ipynb](UnitModel_3_Preprocessing.ipynb):** 132-dimensional feature engineering suite:
+  - Multi-observation variance (`{band}_var`)
+  - Spectral indices (NDVI, NDBI, UI, MNDWI, BSI)
+  - KD-Tree spatial neighborhood context (`{band}_spatial`)
+  - Gap-filling and multi-era trajectory aggregation (overall, early, late, YOY)
+  - Madrid-fit `StandardScaler` export to `preprocessed_data.pkl`
+- **[UnitModel_4_Implementation.ipynb](UnitModel_4_Implementation.ipynb):** `UnitMetricNet` deep metric network:
+  - Domain-adversarial training with Gradient Reversal Layer (GRL)
+  - L2-normalized 16D hypersphere embeddings
+  - Prototypical few-shot adaptation for $[5, 25, 50, 100, 200]$ samples/class
+  - Bayesian MC-Dropout uncertainty quantification
+  - Slide-ready summary table and F1 vs. $\log_2(N)$ error-bar plot
+- **[UnitModel_5_Network_Visualization.ipynb](UnitModel_5_Network_Visualization.ipynb):** Neural network diagnostics & latent manifold visualizer:
+  - Node architecture bottleneck ($132 \to 128 \to 64 \to 32 \to 16 \to 4$)
+  - Forward-hook intermediate node activation heatmaps across eras
+  - t-SNE / PCA latent manifold projections vs. raw input space
+  - Cross-city domain alignment verification (DANN effect)
+  - Gradient-based feature saliency and attribution per era
+- **`unitmodel_pipeline.py`:** Standalone end-to-end Python CLI script for remote compute execution.
+
+---
+
+## Remote Execution Instructions
+To execute on your remote compute instance:
+
+### Environment Setup
 ```bash
-pip install pandas pyarrow geopandas scikit-learn joblib numpy
+pip install numpy pandas pyarrow scikit-learn scipy torch matplotlib
 ```
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
-# Project Metrics and Parameters
-The primary evaluation metric is the **Macro F1-Score**. 
-We make use of **PSO** to ensure that every hyperparameter is optimized. Each "particle" explores the parameter space to find the best configuration for the specific city context.
-The **Memetic Algorithm** integration ensures robustness, catering to live metadata ingested directly from satellite spectral imagery regardless of the training location.
 
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
+### Option A: End-to-End CLI Script
+Run full preprocessing, base training, and few-shot evaluation:
+```bash
+python unitmodel_pipeline.py --mode all --device cuda --epochs 25 --few_shot_trials 10
+```
 
-# Data & APIs
-- **Landsat Data:** Annual observations from 1984–2024, harmonized to the OLI scale.
-- **Parquet Format:** Data is stored in high-performance Parquet files (`madrid_train.parquet`, `amsterdam_transfer.parquet`).
-- **Spectral Features:** Captures reflectance in visible, NIR, and SWIR bands to determine material age and urban density.
+Run specific stages:
+```bash
+# 1. Feature Preprocessing only
+python unitmodel_pipeline.py --mode preprocess
 
-**------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------**
-#  Model turning
-- **Transferable Architecture:** A few-shot learning strategy that adapts a Madrid-trained model to Amsterdam using **Prototype Matching**.
-- **Metaheuristic Optimization:** Employs **Particle Swarm Optimization (PSO)** and **Memetic Algorithms** to fine-tune the embedding space and maximize the **Macro F1-Score**.
-- **Metric Learning Unit:** Uses a Deep Embedding Network trained with **Triplet Loss** to learn city-agnostic age representations.
-- **Spectral Intelligence:** Leverages 6 Landsat bands and engineered indices (NDVI, NDBI, NDWI) for city-agnostic spectral signatures.
-- **Model requests:** We given the tabular data of the pixel, we predict the age class of the pixel.
+# 2. Stage 1 Base Training + Stage 2 Evaluation
+python unitmodel_pipeline.py --mode train --device cuda --epochs 25
+```
+
+### Option B: Interactive Jupyter Execution
+Run sequentially on Jupyter Lab / Notebook:
+1. `UnitModel_2_Data.ipynb`
+2. `UnitModel_3_Preprocessing.ipynb` (generates `preprocessed_data.pkl`)
+3. `UnitModel_4_Implementation.ipynb` (trains `UnitMetricNet` and generates transfer curve)
+4. `UnitModel_5_Network_Visualization.ipynb` (generates node activation & latent manifold presentation figures)
