@@ -137,6 +137,9 @@ def fill_time_series_gaps(flat):
 
 def compute_spectral_indices(df):
     df = df.copy()
+    existing_indices = [c for c in df.columns if any(c.startswith(i) for i in INDEX_COLS)]
+    if existing_indices:
+        df = df.drop(columns=existing_indices)
     B, G, R = df['Blue'], df['Green'], df['Red']
     N, S1, S2 = df['NIR'], df['SWIR1'], df['SWIR2']
     eps = 1e-6
@@ -149,6 +152,11 @@ def compute_spectral_indices(df):
 
 
 def add_spatial_context(flat, radius=2):
+    # Prevent duplicate-merge suffix collisions (_x, _y) if function/cell is re-executed
+    cols_to_drop = [c for c in flat.columns if any(c.startswith(f"{b}_spatial") for b in BASE_BANDS)]
+    if cols_to_drop:
+        flat = flat.drop(columns=cols_to_drop)
+
     pixel_means = flat.groupby(PID)[BASE_BANDS].mean().reset_index()
     coords = pixel_means[PID].to_numpy()
     arr = pixel_means[BASE_BANDS].to_numpy()
@@ -159,11 +167,23 @@ def add_spatial_context(flat, radius=2):
         n_idx = neighbors[neighbors != i]
         spatial_arr[i] = arr[n_idx].mean(axis=0) if len(n_idx) > 0 else arr[i]
     spatial_df = pd.DataFrame(spatial_arr, columns=SPATIAL_BANDS)
-    spatial_df[PID] = pixel_means[PID]
+    for col in PID:
+        spatial_df[col] = pixel_means[col].values
     return flat.merge(spatial_df, on=PID, how='left')
 
 
 def build_pixel_features(flat):
+    flat = flat.copy()
+    # Self-healing: if spatial bands were suffixed (_x/_y) from earlier runs, restore them
+    for b in SPATIAL_BANDS:
+        if b not in flat.columns and f"{b}_x" in flat.columns:
+            flat[b] = flat[f"{b}_x"]
+
+    # Verify all expected feature columns exist
+    missing = [c for c in ALL_BANDS + INDEX_COLS if c not in flat.columns]
+    if missing:
+        raise KeyError(f"Columns not found: {missing}. Ensure add_spatial_context and compute_spectral_indices have run.")
+
     s = flat[flat['age_class'].notna()].copy().sort_values(PID + ['year'])
     target_cols = ALL_BANDS + INDEX_COLS
     grp = s.groupby(PID + ['age_class'])
