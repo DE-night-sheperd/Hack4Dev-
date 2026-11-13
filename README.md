@@ -6,6 +6,7 @@ The **Transferable UnitModel** is a city-agnostic machine learning architecture 
 The core challenge is **cross-city domain shift**: Madrid (Mediterranean; stucco/concrete) and Amsterdam (Maritime; brick/water) have drastically different baseline reflectances. Standard supervised models trained on Madrid fail in zero-shot settings on Amsterdam. 
 
 Our solution combines **Domain-Adversarial Neural Alignment (DANN)** and **Deep Metric Learning (UnitMetricNet)** to learn city-invariant, era-sensitive representations, followed by **Prototypical Few-Shot Transfer** on Amsterdam.
+**ONE KEY IMPORTANT NOTE:** This model takes time to load but then  it runs and delivers the accurate results and ready for real world production.
 
 ---
 
